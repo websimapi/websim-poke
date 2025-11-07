@@ -99,7 +99,8 @@ function startSubscription() {
           created_at: r.created_at,
         })),
       };
-      window.parent.postMessage(payload, '*');
+      // Post to the explicit allowed parent origin to avoid loops/accepting echoes.
+      window.parent.postMessage(payload, ALLOWED_PARENT_ORIGIN);
     });
   } catch (err) {
     log('Subscription error:', err && err.message ? err.message : err);
@@ -135,9 +136,19 @@ if (TOKEN) {
 window.addEventListener('message', (ev) => {
   try {
     if (!ev.data || typeof ev.data !== 'object') return;
+    // Ignore messages that originated from this page (prevent self/echo loops)
+    if (ev.origin === window.location.origin) {
+      log('Ignored message from same origin (likely self/echo):', ev.origin);
+      return;
+    }
     // Only accept messages from the allowed parent origin
     if (ev.origin !== ALLOWED_PARENT_ORIGIN) {
       log('Ignored message from origin:', ev.origin);
+      return;
+    }
+    // Additionally ignore messages that carry our own page origin in their payload (extra safety)
+    if (ev.data && ev.data.origin === window.location.origin) {
+      log('Ignored message with origin payload matching this page (prevent loop).');
       return;
     }
     if (ev.data && ev.data.type === 'request_auth_challenges') {
