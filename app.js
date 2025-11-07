@@ -156,7 +156,7 @@ if (TOKEN) {
 }
 
 // Also listen for messages from parent asking for manual refresh
-window.addEventListener('message', (ev) => {
+window.addEventListener('message', async (ev) => {
   try {
     if (!ev.data || typeof ev.data !== 'object') return;
     // Ignore messages that originated from this page (prevent self/echo loops)
