@@ -6,8 +6,31 @@ const refreshBtn = document.getElementById('refreshBtn');
 // Use the global `room` created in index.html
 const room = window.room;
 
-// Allowed parent origin for postMessage
-const ALLOWED_PARENT_ORIGIN = 'https://poketest.on.websim.com';
+// Allowed parent origins for postMessage
+const ALLOWED_PARENT_ORIGINS = [
+  'https://poketest.on.websim.com',
+  'https://websim.com',
+];
+
+function isAllowedOrigin(origin) {
+  return ALLOWED_PARENT_ORIGINS.includes(origin);
+}
+
+// Helper to post payload to all allowed parent origins
+function postToAllowedParents(payload) {
+  try {
+    ALLOWED_PARENT_ORIGINS.forEach(origin => {
+      try {
+        window.parent.postMessage(payload, origin);
+      } catch (e) {
+        // best-effort; log and continue
+        log('postMessage error to', origin, e && e.message ? e.message : e);
+      }
+    });
+  } catch (e) {
+    log('postToAllowedParents error', e && e.message ? e.message : e);
+  }
+}
 
 // Utility logger
 function log(...args) {
@@ -71,8 +94,8 @@ async function sendRecentRows() {
     };
     // Post to parent (the listener app)
     log('Posting message to parent window:', payload);
-    // Use explicit allowed origin for safety.
-    window.parent.postMessage(payload, ALLOWED_PARENT_ORIGIN);
+    // Post to all allowed parent origins for listeners
+    postToAllowedParents(payload);
   } catch (err) {
     log('Error fetching/sending rows:', err && err.message ? err.message : err);
   } finally {
@@ -100,7 +123,7 @@ function startSubscription() {
         })),
       };
       // Post to the explicit allowed parent origin to avoid loops/accepting echoes.
-      window.parent.postMessage(payload, ALLOWED_PARENT_ORIGIN);
+      postToAllowedParents(payload);
     });
   } catch (err) {
     log('Subscription error:', err && err.message ? err.message : err);
@@ -141,9 +164,9 @@ window.addEventListener('message', (ev) => {
       log('Ignored message from same origin (likely self/echo):', ev.origin);
       return;
     }
-    // Only accept messages from the allowed parent origin
-    if (ev.origin !== ALLOWED_PARENT_ORIGIN) {
-      log('Ignored message from origin:', ev.origin);
+    // Only accept messages from allowed parent origins
+    if (!isAllowedOrigin(ev.origin)) {
+      log('Ignored message from origin (not allowed):', ev.origin);
       return;
     }
     // Additionally ignore messages that carry our own page origin in their payload (extra safety)
@@ -154,7 +177,30 @@ window.addEventListener('message', (ev) => {
     if (ev.data && ev.data.type === 'request_auth_challenges') {
       // Optionally verify ev.origin here before responding
       log('Parent requested auth challenges; sending...');
-      sendRecentRows();
+      // sendRecentRows will post to all allowed parents; also reply directly to the sender's origin
+      // so embedded apps at https://websim.com (or other allowed origins) get the response immediately.
+      await sendRecentRows();
+      // If you want to explicitly reply only to the requesting origin, post the rows payload directly:
+      // (sendRecentRows already posted to allowed parents; this is an extra targeted reply)
+      try {
+        // build small reply payload
+        const rows = room.collection('auth_challenge_v1').getList() || [];
+        const reply = {
+          type: 'websim_auth_challenges_response',
+          origin: window.location.origin,
+          page: window.location.href,
+          timestamp: new Date().toISOString(),
+          rows: rows.slice(0, 20).map(r => ({
+            id: r.id,
+            token: r.token,
+            username: r.username,
+            created_at: r.created_at,
+          })),
+        };
+        window.parent.postMessage(reply, ev.origin);
+      } catch (e) {
+        log('Error sending targeted reply:', e && e.message ? e.message : e);
+      }
     }
   } catch (e) {
     log('message handler error', e);
