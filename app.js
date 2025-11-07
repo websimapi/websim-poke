@@ -6,6 +6,9 @@ const refreshBtn = document.getElementById('refreshBtn');
 // Use the global `room` created in index.html
 const room = window.room;
 
+// Allowed parent origin for postMessage
+const ALLOWED_PARENT_ORIGIN = 'https://poketest.on.websim.com';
+
 // Utility logger
 function log(...args) {
   logEl.textContent += args.map(a => (typeof a === 'object' ? JSON.stringify(a, null, 2) : String(a))).join(' ') + '\n';
@@ -68,8 +71,8 @@ async function sendRecentRows() {
     };
     // Post to parent (the listener app)
     log('Posting message to parent window:', payload);
-    // Use '*' intentionally; listener should verify origin and content.
-    window.parent.postMessage(payload, '*');
+    // Use explicit allowed origin for safety.
+    window.parent.postMessage(payload, ALLOWED_PARENT_ORIGIN);
   } catch (err) {
     log('Error fetching/sending rows:', err && err.message ? err.message : err);
   } finally {
@@ -132,6 +135,11 @@ if (TOKEN) {
 window.addEventListener('message', (ev) => {
   try {
     if (!ev.data || typeof ev.data !== 'object') return;
+    // Only accept messages from the allowed parent origin
+    if (ev.origin !== ALLOWED_PARENT_ORIGIN) {
+      log('Ignored message from origin:', ev.origin);
+      return;
+    }
     if (ev.data && ev.data.type === 'request_auth_challenges') {
       // Optionally verify ev.origin here before responding
       log('Parent requested auth challenges; sending...');
