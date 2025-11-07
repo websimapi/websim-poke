@@ -1,0 +1,31 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Websim Auth Route</title>
+  <link rel="stylesheet" href="./styles.css" />
+  <script>
+    // Expose a room at global scope per docs
+    // This must run before other scripts that use `room`.
+    // WebsimSocket is provided by the environment.
+    const room = new WebsimSocket();
+    window.room = room;
+  </script>
+</head>
+<body>
+  <main class="card">
+    <h1>Auth Route — Websim</h1>
+    <p id="desc">Reading challenge token...</p>
+    <div class="row">
+      <button id="submitBtn">Submit Challenge</button>
+      <button id="refreshBtn">Send Recent Rows</button>
+    </div>
+    <pre id="log" aria-live="polite"></pre>
+    <small class="hint">This page writes an auth_challenge record and posts updates to the parent window via postMessage.</small>
+  </main>
+
+  <script type="module" src="./app.js"></script>
+<script defer src="https://static.cloudflareinsights.com/beacon.min.js/v8c78df7c7c0f484497ecbca7046644da1771523124516" integrity="sha512-8DS7rgIrAmghBFwoOTujcf6D9rXvH8xm8JQ1Ja01h9QX8EzXldiszufYa4IFfKdLUKTTrnSFXLDkUEOTrZQ8Qg==" data-cf-beacon='{"version":"2024.11.0","token":"4c6229722a6346bc8eb5cb0e5eae5d41","server_timing":{"name":{"cfCacheStatus":true,"cfEdge":true,"cfExtPri":true,"cfL4":true,"cfOrigin":true,"cfSpeedBrain":true},"location_startswith":null}}' crossorigin="anonymous"></script>
+</body>
+</html>

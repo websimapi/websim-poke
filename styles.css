@@ -1,0 +1,54 @@
+@font-face {
+  font-family: 'CalSansLike';
+  src: local('Noto Sans'), local('Helvetica Neue'), local('Arial');
+}
+:root{
+  --bg: #ffffff;
+  --fg: #111;
+  --muted: #666;
+  --accent: #0b5cff;
+}
+*{box-sizing:border-box}
+html,body{height:100%}
+body{
+  margin:0;
+  font-family: CalSansLike, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial;
+  background:var(--bg);
+  color:var(--fg);
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  padding:20px;
+}
+.card{
+  width:100%;
+  max-width:520px;
+  border:1px solid #eee;
+  padding:20px;
+  border-radius:8px;
+  box-shadow: 0 6px 18px rgba(20,20,20,0.04);
+}
+h1{margin:0 0 8px;font-size:18px}
+#desc{margin:0 0 12px;color:var(--muted)}
+.row{display:flex;gap:8px;margin-bottom:12px}
+button{
+  padding:8px 12px;
+  border-radius:6px;
+  border:1px solid #ddd;
+  background:#fff;
+  cursor:pointer;
+  font-weight:600;
+}
+button:disabled{opacity:0.6;cursor:default}
+pre{
+  height:180px;
+  overflow:auto;
+  background:#f7f7f8;
+  border-radius:6px;
+  padding:10px;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, "Roboto Mono", monospace;
+  font-size:13px;
+  margin:0 0 10px;
+}
+.hint{display:block;color:var(--muted);font-size:12px;margin-top:8px}
+
